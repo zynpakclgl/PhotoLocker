@@ -1,31 +1,44 @@
-import { useNavigation } from '@react-navigation/core'
-import React from 'react'
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { auth } from '../firebase'
+import React, {useState, useEffect} from 'react'
+import { StyleSheet, Text, View, Platform, Button, Image} from 'react-native'
+import * as ImagePicker from 'expo-image-picker';
+import { Constants } from 'expo-constants';
+import { StatusBar } from 'expo-status-bar';
 
 const HomeScreen = () => {
-  const navigation = useNavigation()
 
-  const handleSignOut = () => {
-    auth
-      .signOut()
-      .then(() => {
-        navigation.replace("Login")
-      })
-      .catch(error => alert(error.message))
+  const [image,setImage] =useState(null);
+
+  useEffect(async() =>{
+    if(Platform.OS !== 'web'){
+      const {status} = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if(status !== 'granted'){
+        alert('Permission denied!!')
+      }
+    }
+  },[])
+
+  const PickImage = async () =>{
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing:true,
+      aspect:[4,3],
+      quality:1
+    })
+    console.log(result)
+    if(!result.cancelled){
+      setImage(result.uri)
+    }
   }
 
   return (
     <View style={styles.container}>
-      <Text>Email: {auth.currentUser?.email}</Text>
-      <TouchableOpacity
-        onPress={handleSignOut}
-        style={styles.button}
-      >
-        <Text style={styles.buttonText}>Sign out</Text>
-      </TouchableOpacity>
+      <Button title="Choose Image" onPress={PickImage}/>
+      {image && <Image source={{uri:image}} style={{
+        width:200,
+        height:200
+      }} />}
     </View>
-  )
+  );
 }
 
 export default HomeScreen
@@ -33,20 +46,8 @@ export default HomeScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-   button: {
-    backgroundColor: '#0782F9',
-    width: '60%',
-    padding: 15,
-    borderRadius: 10,
+    backgroundColor: '#fff',
     alignItems: 'center',
-    marginTop: 40,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: '700',
-    fontSize: 16,
-  },
+    justifyContent: 'center',
+  },  
 })
